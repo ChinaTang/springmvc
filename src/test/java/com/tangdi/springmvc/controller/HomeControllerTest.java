@@ -12,6 +12,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
+import static org.hamcrest.core.IsCollectionContaining.hasItem;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
@@ -28,7 +29,7 @@ public class HomeControllerTest {
         mockMvc.perform(get("/")).andExpect(view().name("home"));
     }
 
-    @Test
+    /*@Test
     public void shouldShowRecentSpittles() throws Exception {
         List<Spittle> expectedSpittles = createSpittleList(20);
         SpittleRepository repository = mock(SpittleRepository.class);
@@ -40,8 +41,7 @@ public class HomeControllerTest {
         mockMvc.perform(get("/spittles"))
                 .andExpect(view().name("spittles"))
                 .andExpect(model().attributeExists("spittleList"));
-    }
-
+    }*/
     private List<Spittle> createSpittleList(int count){
         List<Spittle> spittles = new ArrayList<Spittle>();
         for(int i = 0; i < count; i++){
@@ -50,4 +50,25 @@ public class HomeControllerTest {
         }
         return spittles;
     }
+
+    @Test
+    public void shouldShowPagedSpittles() throws Exception {
+        List<Spittle> expectedSpittles = createSpittleList(50);
+        SpittleRepository repository = mock(SpittleRepository.class);
+        when(repository.findSpittles(238900, 50))
+                .thenReturn(expectedSpittles);
+
+        SpittleController controller = new SpittleController(repository);
+        MockMvc mockMvc = standaloneSetup(controller)
+                .setSingleView(new InternalResourceView(""))
+                .build();
+
+        mockMvc.perform(get("/spittles?max=238900&count=50"))
+                .andExpect(view().name("spittles"))
+                .andExpect(model().attributeExists("spittleList"))
+                .andExpect(model().attribute("spittleList"
+                        , hasItem(expectedSpittles.toArray())));
+    }
+
+
 }
